@@ -1,6 +1,6 @@
+from prettytable import PrettyTable
 from instagram_private_api import Client, ClientCompatPatch
-from colorama import Fore, Back, Style, init
-import keyboard
+from colorama import Fore, Style, init
 
 init(autoreset=True)
 
@@ -20,46 +20,47 @@ def print_banner():
 
 def enter_credentials():
     global username, password
-    username = input("Enter your Instagram username: ")
-    password = input("Enter your Instagram password: ")
+    print(f"{Fore.CYAN}Enter your Instagram username:{Style.RESET_ALL}", end=" ")
+    username = input(f"{Fore.BLUE}")
+    print(f"{Style.RESET_ALL}{Fore.MAGENTA}Enter your Instagram password:{Style.RESET_ALL}", end=" ")
+    password = input(f"{Fore.BLUE}")
+    print(Style.RESET_ALL)
 
 def start_script():
     global username, password
     try:
         api = Client(username, password)
         api.login()
-
         rank_token_followers = Client.generate_uuid()
         followers = api.user_followers(api.authenticated_user_id, rank_token=rank_token_followers)
-        followers_list = set(user['username'] for user in followers['users'])
-
-        rank_token_following = Client.generate_uuid()
-        following = api.user_following(api.authenticated_user_id, rank_token=rank_token_following)
-        following_list = set(user['username'] for user in following['users'])
-
-        not_following_back = following_list - followers_list
-
-        print("People you follow but don't follow you back:")
-        for username in not_following_back:
-            print(username)
-
-        print("Script executed successfully!")
-
+        table = PrettyTable()
+        table.field_names = ["ID", "Username", "Full Name", "Info"]
+        for user in followers['users']:
+            user_id = user.get('pk', '')
+            username = user.get('username', '')
+            full_name = user.get('full_name', '')
+            is_private = user.get('is_private', False)
+            privacy_status = "Private" if is_private else "Public"
+            table.add_row([user_id, username, full_name, privacy_status])
+        print(table)
     except Exception as e:
         print(f"Script failed: {str(e)}")
 
 def main():
     print_banner()
+    while True:
+        print(f"\n{Fore.CYAN}[1] Enter Instagram credentials{Style.RESET_ALL}\n{Fore.BLUE}[2] Start the script{Style.RESET_ALL}\n{Fore.MAGENTA}[3] Exit{Style.RESET_ALL}\n")
 
-    step = input("[1] Input credentials\n[2] Start")
+        choice = input(f"{Fore.CYAN}Select an option: ")
 
-    if step == '1':
-        enter_credentials()
-        main()
-    elif step == '2':
-        start_script()
-    else:
-        print("Invalid choice. Please enter '1' or '2'.")
+        if choice == "1":
+            enter_credentials()
+        elif choice == "2":
+            start_script()
+        elif choice == "3":
+            break
+        else:
+            print("Invalid choice. Please enter a number between 1 and 3.")
 
 if __name__ == "__main__":
     main()
